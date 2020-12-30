@@ -1,0 +1,1 @@
+This application is for testing different monitoring tools for non-relational databases (Elasticsearch and MongoDB)
