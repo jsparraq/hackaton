@@ -1,0 +1,6 @@
+# build app
+/bin
+api-rest
+
+# Connection with firebase
+firebase-private-key.json
