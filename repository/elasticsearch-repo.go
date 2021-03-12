@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"crypto/rand"
 	"log"
 	"time"
+	"reflect"
 
 	"github.com/jsparraq/api-rest/entity"
 	"github.com/olivere/elastic/v6"
@@ -88,4 +90,44 @@ func (*repo) Save(post *entity.Post) (*entity.Post, error) {
 	}
 
 	return post, nil
+}
+
+func (*repo) FindAll() ([]entity.Post, error) {
+	ctx := context.Background()
+
+	for {
+		elasticClient, err = elastic.NewClient(
+			elastic.SetURL("http://127.0.0.1:9200"),
+			elastic.SetSniff(false),
+			elastic.SetHealthcheckInterval(10*time.Second),
+		)
+		if err != nil {
+			log.Println(err)
+			time.Sleep(3 * time.Second)
+		} else {
+			break
+		}
+	}
+
+	searchResult, err := elasticClient.Search().
+		Index(indexName).   
+		Sort("created", true). 
+		From(0).Size(1000).  
+		Pretty(true).       
+		Do(ctx) 
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("Query took %d milliseconds\n", searchResult.TookInMillis)
+
+	var posts []entity.Post
+	var ttyp entity.Post
+	for _, item := range searchResult.Each(reflect.TypeOf(ttyp)) {
+		if t, ok := item.(entity.Post); ok {
+			posts = append(posts, t)
+		}
+	}
+
+	return posts, nil
 }

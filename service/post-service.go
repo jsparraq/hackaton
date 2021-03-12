@@ -12,6 +12,7 @@ import (
 type PostService interface {
 	Validate(post *entity.Post) error
 	Create(post *entity.Post) (*entity.Post, error)
+	FindAll() ([]entity.Post, error)
 }
 
 type service struct{}
@@ -40,4 +41,8 @@ func (*service) Validate(post *entity.Post) error {
 func (*service) Create(post *entity.Post) (*entity.Post, error) {
 	post.Created = time.Now()
 	return repo.Save(post)
+}
+
+func (*service) FindAll() ([]entity.Post, error) {
+	return repo.FindAll()
 }

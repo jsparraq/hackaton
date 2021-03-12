@@ -20,5 +20,6 @@ func main() {
 	})
 
 	httpRouter.POST("/posts", postController.AddPost)
+	httpRouter.GET("/posts", postController.GetPosts)
 	httpRouter.SERVE(port)
 }

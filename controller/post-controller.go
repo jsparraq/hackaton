@@ -17,6 +17,7 @@ var (
 
 // PostController controller
 type PostController interface {
+	GetPosts(response http.ResponseWriter, request *http.Request)
 	AddPost(response http.ResponseWriter, request *http.Request)
 }
 
@@ -48,4 +49,16 @@ func (*controller) AddPost(response http.ResponseWriter, request *http.Request) 
 	}
 	response.WriteHeader(http.StatusOK)
 	json.NewEncoder(response).Encode(result)
+}
+
+func (*controller) GetPosts(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-type", "application/json")
+	posts, err := postService.FindAll()
+	if err != nil {
+		response.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(response).Encode(errors.ServiceError{Message: "Error getting the posts"})
+	}
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(posts)
+
 }
