@@ -7,7 +7,8 @@ import (
 	"log"
 	"time"
 	"reflect"
-	"encoding/base64"
+	"math/big"
+	"strconv"
 
 	"github.com/jsparraq/api-rest/entity"
 	"github.com/olivere/elastic/v6"
@@ -54,7 +55,7 @@ func (*repo) Save(post *entity.Post) (*entity.Post, error) {
 
 	for {
 		elasticClient, err = elastic.NewClient(
-			elastic.SetURL("http://127.0.0.1:9200"),
+			elastic.SetURL("http://elastic:elastic@ec2-3-238-134-215.compute-1.amazonaws.com:9200/"),
 			elastic.SetSniff(false),
 			elastic.SetHealthcheckInterval(10*time.Second),
 		)
@@ -79,15 +80,24 @@ func (*repo) Save(post *entity.Post) (*entity.Post, error) {
 	}
 
 	bulk := elasticClient.Bulk()
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 100; i++ {
+		
+		
+		b := make([]rune, 10)
+		for i := range b {
+			number, _ := rand.Int(rand.Reader, big.NewInt(52))
+			number2, _ := strconv.Atoi(number.String())
+			b[i] = letters[number2]
+		}
+
 		index, _ := rand.Prime(rand.Reader, 64)
-		v := rand.Int()
 		index_string := index.String()
 
-		post.Created = time.Now()
-		post.Keys = map[string]string{
-			base64.StdEncoding.EncodeToString([]byte(v.String() + "value to encode")):"asdf",
+		var postNew = entity.Post{Message: post.Message, Created: time.Now() }
+		postNew.Keys = map[string]string{
+			string(b):"asdf",
 		}
 	
 
@@ -96,15 +106,32 @@ func (*repo) Save(post *entity.Post) (*entity.Post, error) {
 		req.Type(indexType)
 		req.Index(indexName)
 		req.Id(index_string)
-		req.Doc(post)
+		req.Doc(postNew)
 
 		bulk = bulk.Add(req)
+		
+	}
+	log.Println("NewBulkIndexRequest().NumberOfActions():", bulk.NumberOfActions())
+	bulkResp, err := bulk.Do(ctx)
+	
+	if err != nil {
+		panic(err)
 	}
 
-	bulkResp, err := bulk.Do(ctx)
+	indexed := bulkResp.Indexed()
 
-	if err != nil {
-		panic("bulk.Do(ctx) ERROR:", err)
+	log.Println("nbulkResp.Indexed():", indexed)
+	log.Println("bulkResp.Indexed() TYPE:", reflect.TypeOf(indexed))
+
+	t := reflect.TypeOf(indexed)
+
+	log.Println("nt:", t)
+	log.Println("NewBulkIndexRequest().NumberOfActions():", bulk.NumberOfActions())
+
+	for i := 0; i < t.NumMethod(); i++ {
+		method := t.Method(i)
+		log.Println("nbulkResp.Indexed() METHOD NAME:", i, method.Name)
+		log.Println("bulkResp.Indexed() method:", method)
 	}
 
 	return post, nil
@@ -115,7 +142,7 @@ func (*repo) FindAll() ([]entity.Post, error) {
 
 	for {
 		elasticClient, err = elastic.NewClient(
-			elastic.SetURL("http://127.0.0.1:9200"),
+			elastic.SetURL("http://elastic:elastic@ec2-3-238-134-215.compute-1.amazonaws.com:9200/"),
 			elastic.SetSniff(false),
 			elastic.SetHealthcheckInterval(10*time.Second),
 		)

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Delete app directory 
-#rm -f ./bin
+rm -rf ./bin
 
 # Build app
 go build -o ./bin/app
