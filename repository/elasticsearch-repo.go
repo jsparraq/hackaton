@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 	"reflect"
+	"encoding/base64"
 
 	"github.com/jsparraq/api-rest/entity"
 	"github.com/olivere/elastic/v6"
@@ -77,16 +78,33 @@ func (*repo) Save(post *entity.Post) (*entity.Post, error) {
 		}
 	}
 
-	p, _ := rand.Prime(rand.Reader, 64)
+	bulk := elasticClient.Bulk()
 
-	_, err = elasticClient.Index().
-		Index(indexName).
-		Type(indexType).
-		Id(p.String()).
-		BodyJson(post).
-		Do(ctx)
+	for i := 0; i < 1000; i++ {
+		index, _ := rand.Prime(rand.Reader, 64)
+		v := rand.Int()
+		index_string := index.String()
+
+		post.Created = time.Now()
+		post.Keys = map[string]string{
+			base64.StdEncoding.EncodeToString([]byte(v.String() + "value to encode")):"asdf",
+		}
+	
+
+		req := elastic.NewBulkIndexRequest()
+		req.OpType("index") // set type to "index" document
+		req.Type(indexType)
+		req.Index(indexName)
+		req.Id(index_string)
+		req.Doc(post)
+
+		bulk = bulk.Add(req)
+	}
+
+	bulkResp, err := bulk.Do(ctx)
+
 	if err != nil {
-		panic(err)
+		panic("bulk.Do(ctx) ERROR:", err)
 	}
 
 	return post, nil

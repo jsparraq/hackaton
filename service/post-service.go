@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"time"
 
 	"github.com/jsparraq/api-rest/entity"
 	"github.com/jsparraq/api-rest/repository"
@@ -39,7 +38,6 @@ func (*service) Validate(post *entity.Post) error {
 }
 
 func (*service) Create(post *entity.Post) (*entity.Post, error) {
-	post.Created = time.Now()
 	return repo.Save(post)
 }
 
